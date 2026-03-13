@@ -1,0 +1,9 @@
+com\example\orderprocessor\model\Order.class
+com\example\orderprocessor\model\OrderProcessedEvent.class
+com\example\orderprocessor\model\OrderStatus.class
+com\example\orderprocessor\OrderProcessorApplication.class
+com\example\orderprocessor\controller\HealthController.class
+com\example\orderprocessor\config\RabbitMQConfig.class
+com\example\orderprocessor\model\OrderPlacedEvent.class
+com\example\orderprocessor\repository\OrderRepository.class
+com\example\orderprocessor\service\OrderProcessingService.class
