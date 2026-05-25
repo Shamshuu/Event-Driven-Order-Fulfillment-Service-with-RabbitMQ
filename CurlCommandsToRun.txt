@@ -1,0 +1,25 @@
+docker-compose up --build -d
+
+
+curl http://localhost:8080/health
+
+curl -u guest:guest -H "content-type:application/json" -X POST http://localhost:15672/api/exchanges/%2f/order.events/publish -d '{
+  "properties": {"content_type": "application/json"},
+  "routing_key": "order.placed",
+  "payload": "{\"orderId\":\"test-order-001\",\"productId\":\"prod-999\",\"quantity\":1,\"customerId\":\"cust-42\",\"timestamp\":\"2026-05-24T12:00:00Z\"}",
+  "payload_encoding": "string"
+}'
+
+
+#To verify the idempotency functionality, simply run the exact same curl command a second time. If you check the Docker logs (docker-compose logs order-processor-service), you will see the service log that it processed the first message and safely ignored the duplicate second message.
+______________________________________________________________________________________
+Finally, to verify the Dead Letter Queue (DLQ) functionality, we can send an invalid order (for example, omitting the required productId in the payload). The service will reject it, and it will be routed to the DLQ:
+
+curl -u guest:guest -H "content-type:application/json" -X POST http://localhost:15672/api/exchanges/%2f/order.events/publish -d '{
+  "properties": {"content_type": "application/json"},
+  "routing_key": "order.placed",
+  "payload": "{\"orderId\":\"error-order-002\",\"productId\":null,\"quantity\":1,\"customerId\":\"cust-42\",\"timestamp\":\"2026-05-24T12:00:00Z\"}",
+  "payload_encoding": "string"
+}'
+
+docker compose down
