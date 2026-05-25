@@ -1,0 +1,22 @@
+This project is an Event-Driven Order Fulfillment Service designed to asynchronously process incoming customer orders. Its primary purpose is to decouple the "order placement" action from the heavy lifting of "order fulfillment." By doing this, upstream services (like an e-commerce storefront) can instantly confirm an order without waiting for database writes, inventory checks, or payment processing, resulting in a highly scalable and resilient architecture that won't crash during traffic spikes.
+
+To implement the core functionality, the service acts as a background consumer. It listens for OrderPlacedEvent messages. When an order arrives, my code first performs an idempotency check against the database to ensure we haven't already processed this exact order (preventing duplicates). It then saves the order state as PROCESSING, completes its required logic, updates the state to PROCESSED, and finally publishes a new OrderProcessedEvent back out to the network so downstream systems (like shipping or billing) know to take the next step.
+
+For error handling functionality, the service automatically retries temporary failures (like database connection blips) using exponential backoff. If a message is permanently malformed or fails repeatedly, it is securely routed to a Dead Letter Queue (DLQ) for manual inspection, guaranteeing zero data loss.
+
+Here is how each technology helps achieve these goals:
+
+Java & Spring Boot:
+Provides the robust, enterprise-grade framework. Spring AMQP and Spring Data JPA eliminate boilerplate code, allowing me to easily wire up message listeners and database repositories.
+
+RabbitMQ: 
+Acts as the central nervous system. It buffers incoming orders to protect the service from being overwhelmed and handles the complex routing of events and Dead Letter Queues.
+
+MySQL: 
+Provides reliable data persistence. It stores the final order states and enforces strict Primary Key constraints that back up my idempotency logic.
+
+Docker & Docker Compose: 
+Packages the service, database, and message broker into identical, self-contained environments. This ensures that the code runs exactly the same way on my local machine as it will in production.
+
+TestContainers: 
+Integrates with my test suite to automatically spin up temporary, real instances of RabbitMQ and MySQL during integration testing, ensuring my tests are highly accurate and reliable.
